@@ -76,6 +76,6 @@ const props = defineProps({
 })
 
 const canManageUsers = computed(() => {
-  return ['super_admin', 'admin'].includes(props.user.role)
+  return props.user.role === 'super_admin'
 })
 </script>

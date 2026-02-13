@@ -3,9 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Client extends Model
 {
+    use HasUuids, SoftDeletes;
     protected $fillable = [
         'company_name',
         'logo_url',
@@ -22,6 +25,10 @@ class Client extends Model
 
     protected $casts = [
         'is_active' => 'boolean',
+    ];
+
+    protected $appends = [
+        'logo',
     ];
 
     // Relationships

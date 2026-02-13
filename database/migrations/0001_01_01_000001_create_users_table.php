@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('users', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->string('name');
+            $table->string('full_name');
             $table->enum('role', ['super_admin', 'admin', 'client', 'pic']);
             $table->uuid('client_id')->nullable();
             $table->string('email')->unique();
@@ -45,11 +45,34 @@ return new class extends Migration
 
         Schema::create('sessions', function (Blueprint $table) {
             $table->string('id')->primary();
-            $table->foreignId('user_id')->nullable()->index();
+            $table->uuid('user_id')->nullable()->index();
             $table->string('ip_address', 45)->nullable();
             $table->text('user_agent')->nullable();
             $table->longText('payload');
             $table->integer('last_activity')->index();
+            
+            $table->foreign('user_id')
+                  ->references('id')
+                  ->on('users')
+                  ->nullOnDelete();
+        });
+        
+        // Add foreign keys for audit trail
+        Schema::table('users', function (Blueprint $table) {
+            $table->foreign('created_by')
+                  ->references('id')
+                  ->on('users')
+                  ->nullOnDelete();
+            
+            $table->foreign('updated_by')
+                  ->references('id')
+                  ->on('users')
+                  ->nullOnDelete();
+            
+            $table->foreign('deleted_by')
+                  ->references('id')
+                  ->on('users')
+                  ->nullOnDelete();
         });
     }
 

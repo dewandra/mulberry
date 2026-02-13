@@ -41,6 +41,16 @@ class User extends Authenticatable
     ];
 
     /**
+     * The accessors to append to the model's array form.
+     *
+     * @var array<int, string>
+     */
+    protected $appends = [
+        'role_display',
+        'role_badge_color',
+    ];
+
+    /**
      * Get the attributes that should be cast.
      *
      * @return array<string, string>
