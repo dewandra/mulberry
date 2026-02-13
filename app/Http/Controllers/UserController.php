@@ -2,21 +2,28 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
 use App\Models\Client;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 
-class ClientController extends Controller
+class UserController extends Controller
 {
     public function index(Request $request)
     {
-        $clients = Client::query()
-            ->with(['creator', 'updater'])
+        $users = User::query()
+            ->with(['client'])
             ->when($request->search, function ($query, $search) {
-                $query->where('company_name', 'like', "%{$search}%")
+                $query->where('full_name', 'like', "%{$search}%")
                       ->orWhere('email', 'like', "%{$search}%");
+            })
+            ->when($request->role, function ($query, $role) {
+                $query->where('role', $role);
+            })
+            ->when($request->client_id, function ($query, $clientId) {
+                $query->where('client_id', $clientId);
             })
             ->when($request->status !== null, function ($query) use ($request) {
                 $query->where('is_active', $request->boolean('status'));
@@ -25,98 +32,112 @@ class ClientController extends Controller
             ->paginate(10)
             ->withQueryString();
 
-        return Inertia::render('Clients/Index', [
+        $clients = Client::active()->get(['id', 'company_name']);
+
+        return Inertia::render('Users/Index', [
+            'users' => $users,
             'clients' => $clients,
-            'filters' => $request->only(['search', 'status']),
+            'filters' => $request->only(['search', 'role', 'client_id', 'status']),
         ]);
     }
 
     public function create()
     {
-        return Inertia::render('Clients/Create');
+        $clients = Client::active()->get(['id', 'company_name']);
+        
+        return Inertia::render('Users/Create', [
+            'clients' => $clients,
+        ]);
     }
 
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'company_name' => 'required|string|max:255',
-            'contact_person' => 'nullable|string|max:255',
-            'email' => 'nullable|email|max:255',
-            'phone' => 'nullable|string|max:50',
-            'address' => 'nullable|string',
-            'logo' => 'nullable|image|mimes:png,jpg,jpeg,svg,webp|max:2048',
+            'full_name' => 'required|string|max:255',
+            'email' => 'required|email|max:255|unique:users,email',
+            'password' => 'required|string|min:8',
+            'role' => ['required', Rule::in(['super_admin', 'admin', 'client', 'pic'])],
+            'client_id' => 'nullable|uuid|exists:clients,id',
             'is_active' => 'boolean',
         ]);
 
-        $validated['created_by'] = $request->user()->id;
-
-        // Handle logo upload
-        if ($request->hasFile('logo')) {
-            $clientId = Str::uuid();
-            $logo = $request->file('logo');
-            $filename = $logo->getClientOriginalName();
-            $path = $logo->storeAs("client-logos/{$clientId}", $filename, 'public');
-            
-            $validated['id'] = $clientId;
-            $validated['logo_url'] = $path;
-            $validated['logo_filename'] = $filename;
+        // Validate client_id required for client and pic roles
+        if (in_array($validated['role'], ['client', 'pic']) && empty($validated['client_id'])) {
+            return back()->withErrors(['client_id' => 'Client is required for this role.']);
         }
 
-        Client::create($validated);
+        $validated['password'] = Hash::make($validated['password']);
+        $validated['created_by'] = $request->user()->id;
 
-        return redirect()->route('clients.index')
-            ->with('success', 'Client created successfully.');
+        User::create($validated);
+
+        return redirect()->route('users.index')
+            ->with('success', 'User created successfully.');
     }
 
-    public function edit(Client $client)
+    public function edit(User $user)
     {
-        return Inertia::render('Clients/Edit', [
-            'client' => $client,
+        $clients = Client::active()->get(['id', 'company_name']);
+        
+        return Inertia::render('Users/Edit', [
+            'user' => $user->load('client'),
+            'clients' => $clients,
         ]);
     }
 
-    public function update(Request $request, Client $client)
+    public function update(Request $request, User $user)
     {
         $validated = $request->validate([
-            'company_name' => 'required|string|max:255',
-            'contact_person' => 'nullable|string|max:255',
-            'email' => 'nullable|email|max:255',
-            'phone' => 'nullable|string|max:50',
-            'address' => 'nullable|string',
-            'logo' => 'nullable|image|mimes:png,jpg,jpeg,svg,webp|max:2048',
+            'full_name' => 'required|string|max:255',
+            'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user->id)],
+            'password' => 'nullable|string|min:8',
+            'role' => ['required', Rule::in(['super_admin', 'admin', 'client', 'pic'])],
+            'client_id' => 'nullable|uuid|exists:clients,id',
             'is_active' => 'boolean',
         ]);
+
+        // Validate client_id required for client and pic roles
+        if (in_array($validated['role'], ['client', 'pic']) && empty($validated['client_id'])) {
+            return back()->withErrors(['client_id' => 'Client is required for this role.']);
+        }
+
+        // Prevent users from changing their own role
+        if ($user->id === $request->user()->id && $user->role !== $validated['role']) {
+            return back()->withErrors(['role' => 'You cannot change your own role.']);
+        }
+
+        // Prevent users from deactivating themselves
+        if ($user->id === $request->user()->id && !$validated['is_active']) {
+            return back()->withErrors(['is_active' => 'You cannot deactivate your own account.']);
+        }
+
+        // Only update password if provided
+        if (!empty($validated['password'])) {
+            $validated['password'] = Hash::make($validated['password']);
+        } else {
+            unset($validated['password']);
+        }
 
         $validated['updated_by'] = $request->user()->id;
 
-        // Handle logo upload
-        if ($request->hasFile('logo')) {
-            // Delete old logo
-            if ($client->logo_url) {
-                Storage::disk('public')->delete($client->logo_url);
-            }
+        $user->update($validated);
 
-            $logo = $request->file('logo');
-            $filename = $logo->getClientOriginalName();
-            $path = $logo->storeAs("client-logos/{$client->id}", $filename, 'public');
-            
-            $validated['logo_url'] = $path;
-            $validated['logo_filename'] = $filename;
-        }
-
-        $client->update($validated);
-
-        return redirect()->route('clients.index')
-            ->with('success', 'Client updated successfully.');
+        return redirect()->route('users.index')
+            ->with('success', 'User updated successfully.');
     }
 
-    public function destroy(Request $request, Client $client)
+    public function destroy(Request $request, User $user)
     {
-        $client->deleted_by = $request->user()->id;
-        $client->save();
-        $client->delete();
+        // Prevent users from deleting themselves
+        if ($user->id === $request->user()->id) {
+            return back()->withErrors(['error' => 'You cannot delete your own account.']);
+        }
 
-        return redirect()->route('clients.index')
-            ->with('success', 'Client deleted successfully.');
+        $user->deleted_by = $request->user()->id;
+        $user->save();
+        $user->delete();
+
+        return redirect()->route('users.index')
+            ->with('success', 'User deleted successfully.');
     }
 }
