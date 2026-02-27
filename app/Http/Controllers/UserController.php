@@ -14,7 +14,7 @@ class UserController extends Controller
     public function index(Request $request)
     {
         $users = User::query()
-            ->with(['client'])
+            ->with(['client', 'assignedProjects'])
             ->when($request->search, function ($query, $search) {
                 $query->where('full_name', 'like', "%{$search}%")
                       ->orWhere('email', 'like', "%{$search}%");

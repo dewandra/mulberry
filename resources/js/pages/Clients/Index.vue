@@ -1,5 +1,5 @@
 <template>
-  <AuthenticatedLayout title="Client Management" subtitle="Manage client companies">
+  <AuthenticatedLayout title="Company Management" subtitle="Manage client companies">
     <!-- Header with Search and Create Button -->
     <div class="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
       <div class="flex-1 max-w-md">
@@ -7,7 +7,7 @@
           type="text"
           v-model="form.search"
           @input="search"
-          placeholder="Search clients by name, contact, or email..."
+          placeholder="Search companies by name, contact, or email..."
           class="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
         />
       </div>
@@ -18,7 +18,7 @@
         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
         </svg>
-        Create Client
+        Add Company
       </button>
     </div>
 
@@ -160,6 +160,7 @@
 
     <!-- Client Modal -->
     <ClientModal
+      :key="modalKey"
       :show="showModal"
       :client="selectedClient"
       @close="closeModal"
@@ -187,6 +188,7 @@ const form = reactive({
 
 const showModal = ref(false)
 const selectedClient = ref(null)
+const modalKey = ref(0)
 
 // Simple debounce implementation
 let searchTimeout = null
@@ -209,11 +211,13 @@ const filter = () => {
 
 const openCreateModal = () => {
   selectedClient.value = null
+  modalKey.value++
   showModal.value = true
 }
 
 const openEditModal = (client) => {
   selectedClient.value = client
+  modalKey.value++
   showModal.value = true
 }
 
@@ -226,10 +230,9 @@ const handleSaved = () => {
   closeModal()
   router.reload({ only: ['clients'] })
 }
-
 const deleteClient = (client) => {
   Swal.fire({
-    title: 'Delete Client?',
+    title: 'Delete Companies?',
     html: `Are you sure you want to delete <strong>${client.company_name}</strong>?<br><small class="text-gray-500">This action cannot be undone.</small>`,
     icon: 'warning',
     showCancelButton: true,

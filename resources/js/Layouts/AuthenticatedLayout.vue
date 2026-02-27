@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-gray-50">
+  <div class="min-h-screen" style="background: #f3f4f8;">
     <Head :title="title" />
     
     <!-- Mobile menu backdrop -->
@@ -12,82 +12,95 @@
     <!-- Sidebar -->
     <aside 
       :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'"
-      class="fixed inset-y-0 left-0 w-64 bg-white border-r border-gray-200 flex flex-col z-50 transition-transform duration-300 ease-in-out lg:translate-x-0"
+      class="fixed inset-y-0 left-0 w-64 flex flex-col z-50 transition-transform duration-300 ease-in-out lg:translate-x-0"
+      style="background: linear-gradient(175deg, #0f172a 0%, #1e293b 40%, #1e293b 70%, #334155 100%);"
     >
+      <!-- Decorative top glow -->
+      <div class="absolute top-0 right-0 w-40 h-40 rounded-full opacity-10 pointer-events-none" style="background: radial-gradient(circle, #ffffff 0%, transparent 70%); transform: translate(30%, -30%);"></div>
+      <div class="absolute bottom-32 left-0 w-32 h-32 rounded-full opacity-5 pointer-events-none" style="background: radial-gradient(circle, #94a3b8 0%, transparent 70%); transform: translate(-40%, 0);"></div>
+
       <!-- Logo -->
-      <div class="h-[5.5rem] flex items-center px-6 border-b border-gray-200">
-        <h1 class="text-xl font-bold text-gray-900" style="font-family: 'Sora', sans-serif;">
-          ACT<span class="text-blue-600">.</span>
-        </h1>
+      <div class="h-[5.5rem] flex items-center px-6 border-b border-white/10 relative z-10">
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background: linear-gradient(135deg, #475569, #1e293b);">
+            <span class="text-white font-black text-sm">A</span>
+          </div>
+          <h1 class="text-xl font-bold text-white" style="font-family: 'Sora', sans-serif;">
+            ACT<span class="text-slate-400">.</span>
+          </h1>
+        </div>
       </div>
 
       <!-- Navigation -->
-      <nav class="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
-        <!-- Dashboard - Available to all roles -->
+      <nav class="flex-1 px-4 py-6 space-y-1 overflow-y-auto relative z-10">
+        <!-- Main Section -->
+        <p class="px-3 text-xs font-semibold text-white/30 uppercase tracking-widest mb-3">Main</p>
+
         <NavLink href="/dashboard" :active="route().current('dashboard')">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+          <svg class="w-4 h-4 flex-shrink-0 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h4a1 1 0 011 1v5a1 1 0 01-1 1H5a1 1 0 01-1-1V5zm10 0a1 1 0 011-1h4a1 1 0 011 1v2a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zm10-3a1 1 0 011-1h4a1 1 0 011 1v7a1 1 0 01-1 1h-4a1 1 0 01-1-1v-7z" />
           </svg>
           Dashboard
         </NavLink>
 
+        <NavLink href="/projects" :active="route().current('projects.*')">
+          <svg class="w-4 h-4 flex-shrink-0 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+          </svg>
+          Projects
+        </NavLink>
+
         <!-- Management Section - Super Admin Only -->
         <template v-if="isSuperAdmin">
-          <div class="pt-6 pb-2">
-            <p class="px-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">
-              Management
-            </p>
-          </div>
+          <p class="px-3 text-xs font-semibold text-white/30 uppercase tracking-widest mt-6 mb-3">Management</p>
 
           <NavLink href="/users" :active="route().current('users.*')">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+            <svg class="w-4 h-4 flex-shrink-0 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
             </svg>
             Users
           </NavLink>
 
           <NavLink href="/clients" :active="route().current('clients.*')">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-4 h-4 flex-shrink-0 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
             </svg>
-            Clients
+            Companies
           </NavLink>
         </template>
       </nav>
 
-      <!-- User Menu -->
-      <div class="border-t border-gray-200 p-4">
-        <div class="flex items-center space-x-3 mb-3">
-          <!-- User Avatar / Client Logo -->
-          <div v-if="clientLogo" class="w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center flex-shrink-0 bg-white p-1">
+      <!-- User Card -->
+      <div class="relative z-10 border-t border-white/10 p-4">
+        <div class="flex items-center gap-3 mb-3">
+          <!-- Avatar / Client Logo -->
+          <div v-if="clientLogo" class="w-9 h-9 rounded-xl border border-white/20 flex items-center justify-center flex-shrink-0 bg-white/10 p-1">
             <img :src="clientLogo" :alt="clientCompanyName" class="w-full h-full object-contain" />
           </div>
-          <div v-else class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
-            <span class="text-sm font-semibold text-blue-600">
-              {{ userInitials }}
-            </span>
+          <div v-else class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 font-bold text-sm text-white" style="background: linear-gradient(135deg, #475569, #0f172a);">
+            {{ userInitials }}
           </div>
-          
+
           <div class="flex-1 min-w-0">
-            <p class="text-sm font-medium text-gray-900 truncate">
+            <p class="text-sm font-semibold text-white truncate">
               {{ $page.props.auth.user.full_name }}
             </p>
-            <p class="text-xs text-gray-500 truncate">
+            <p class="text-xs text-white/50 truncate">
               {{ $page.props.auth.user.role_display }}
             </p>
-            <p v-if="clientCompanyName" class="text-xs text-blue-600 truncate font-medium mt-0.5">
+            <p v-if="clientCompanyName" class="text-xs text-slate-300 truncate font-medium mt-0.5">
               {{ clientCompanyName }}
             </p>
           </div>
         </div>
         <button 
           @click="logout"
-          class="w-full flex items-center justify-center space-x-2 px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+          class="w-full flex items-center justify-center gap-2 px-4 py-2 text-xs font-semibold text-white/70 hover:text-white rounded-xl transition-all duration-200 hover:bg-white/10 border border-white/10 hover:border-white/20"
         >
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
           </svg>
-          <span>Logout</span>
+          <span>Sign Out</span>
         </button>
       </div>
     </aside>
@@ -95,15 +108,15 @@
     <!-- Main Content -->
     <main class="lg:pl-64">
       <!-- Header -->
-      <header class="bg-white border-b border-gray-200 sticky top-0 z-10">
+      <header class="bg-white/80 backdrop-blur-md border-b border-gray-200/70 sticky top-0 z-10">
         <div class="px-4 sm:px-6 lg:px-8 py-4">
           <div class="flex items-center gap-4">
             <!-- Mobile menu button -->
             <button
               @click="sidebarOpen = !sidebarOpen"
-              class="lg:hidden p-2 rounded-lg text-gray-600 hover:bg-gray-100 transition-colors -ml-2"
+              class="lg:hidden p-2 rounded-xl text-gray-600 hover:bg-gray-100 transition-colors -ml-2"
             >
-              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
               </svg>
             </button>
@@ -113,7 +126,7 @@
               <h2 class="text-xl sm:text-2xl font-bold text-gray-900" style="font-family: 'Sora', sans-serif;">
                 {{ title }}
               </h2>
-              <p v-if="subtitle" class="mt-1 text-xs sm:text-sm text-gray-600">
+              <p v-if="subtitle" class="mt-1 text-xs sm:text-sm text-gray-500">
                 {{ subtitle }}
               </p>
             </div>

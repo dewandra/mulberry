@@ -73,7 +73,8 @@
             <tr>
               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Client</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Company</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Assigned Projects</th>
               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
               <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
             </tr>
@@ -101,6 +102,28 @@
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                 {{ user.client ? user.client.company_name : '-' }}
               </td>
+              <!-- Assigned Projects: only shown for PIC role -->
+              <td class="px-6 py-4 text-sm">
+                <template v-if="user.role === 'pic' && user.assigned_projects?.length">
+                  <div class="flex flex-wrap gap-1.5">
+                    <a
+                      v-for="project in user.assigned_projects"
+                      :key="project.id"
+                      :href="route('projects.show', project.id)"
+                      class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-orange-50 text-orange-700 hover:bg-orange-100 transition-colors border border-orange-200"
+                      :title="project.project_name"
+                    >
+                      <span class="font-mono">{{ project.project_code }}</span>
+                    </a>
+                  </div>
+                </template>
+                <template v-else-if="user.role === 'pic'">
+                  <span class="text-xs text-gray-400 italic">No projects assigned</span>
+                </template>
+                <template v-else>
+                  <span class="text-gray-300">—</span>
+                </template>
+              </td>
               <td class="px-6 py-4 whitespace-nowrap">
                 <span :class="user.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'" class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full">
                   {{ user.is_active ? 'Active' : 'Inactive' }}
@@ -124,7 +147,7 @@
               </td>
             </tr>
             <tr v-if="users.data.length === 0">
-              <td colspan="5" class="px-6 py-8 text-center text-gray-500">
+              <td colspan="6" class="px-6 py-8 text-center text-gray-500">
                 No users found.
               </td>
             </tr>
@@ -188,6 +211,7 @@
 
     <!-- User Modal -->
     <UserModal
+      :key="modalKey"
       :show="showModal"
       :user="selectedUser"
       :clients="clients"
@@ -219,6 +243,7 @@ const form = reactive({
 
 const showModal = ref(false)
 const selectedUser = ref(null)
+const modalKey = ref(0)
 
 // Simple debounce implementation
 let searchTimeout = null
@@ -253,11 +278,13 @@ const getRoleBadgeClass = (role) => {
 
 const openCreateModal = () => {
   selectedUser.value = null
+  modalKey.value++
   showModal.value = true
 }
 
 const openEditModal = (user) => {
   selectedUser.value = user
+  modalKey.value++
   showModal.value = true
 }
 
