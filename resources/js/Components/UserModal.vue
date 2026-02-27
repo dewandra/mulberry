@@ -226,7 +226,7 @@ const showClientField = computed(() => {
   return ['client', 'pic'].includes(form.role)
 })
 
-// Watch for user changes to populate form
+// Watch for user changes to populate form (edit mode)
 watch(() => props.user, (newUser) => {
   if (newUser) {
     form.full_name = newUser.full_name
@@ -240,6 +240,13 @@ watch(() => props.user, (newUser) => {
   }
 }, { immediate: true })
 
+// Reset form every time modal opens in create mode (user stays null so the watch above won't trigger again)
+watch(() => props.show, (visible) => {
+  if (visible && !props.user) {
+    form.reset()
+  }
+})
+
 const submit = () => {
   const url = isEditing.value 
     ? route('users.update', props.user.id)
@@ -250,6 +257,7 @@ const submit = () => {
   form[method](url, {
     preserveScroll: true,
     onSuccess: () => {
+      form.reset()
       Swal.fire({
         title: 'Success!',
         text: `User has been ${isEditing.value ? 'updated' : 'created'} successfully.`,

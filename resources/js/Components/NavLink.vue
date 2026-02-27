@@ -2,10 +2,10 @@
   <Link
     :href="href"
     :class="[
-      'flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-150',
+      'flex items-center space-x-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200',
       active
-        ? 'bg-blue-50 text-blue-700'
-        : 'text-gray-700 hover:bg-gray-100'
+        ? 'bg-white/15 text-white shadow-sm backdrop-blur-sm border border-white/20'
+        : 'text-white/60 hover:bg-white/10 hover:text-white'
     ]"
   >
     <slot />

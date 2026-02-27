@@ -8,6 +8,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Models\Project;
 
 class User extends Authenticatable
 {
@@ -68,6 +69,17 @@ class User extends Authenticatable
     public function client()
     {
         return $this->belongsTo(Client::class);
+    }
+
+    // Projects assigned to this user as PIC
+    public function assignedProjects()
+    {
+        return $this->belongsToMany(
+            Project::class,
+            'project_pics',
+            'pic_user_id',
+            'project_id'
+        )->select(['projects.id', 'projects.project_name', 'projects.project_code', 'projects.status']);
     }
 
     public function creator()
@@ -138,7 +150,7 @@ class User extends Authenticatable
             'admin' => 'Admin ACT',
             'client' => 'Client',
             'pic' => 'PIC',
-            default => $this->role,
+            default => $this->role ?? '',
         };
     }
 
