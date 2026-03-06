@@ -254,21 +254,6 @@
                                     </p>
                                 </div>
 
-                                <!-- Is Active -->
-                                <div class="flex items-center">
-                                    <input
-                                        id="is_active"
-                                        type="checkbox"
-                                        v-model="form.is_active"
-                                        class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                                    />
-                                    <label
-                                        for="is_active"
-                                        class="ml-2 block text-sm text-gray-700"
-                                    >
-                                        Active
-                                    </label>
-                                </div>
 
                                 <!-- Footer Buttons -->
                                 <div
@@ -335,7 +320,6 @@ const form = useForm({
     email: "",
     phone: "",
     address: "",
-    is_active: true,
 });
 
 const handleLogoChange = (event) => {
@@ -363,7 +347,6 @@ watch(
             form.email = newClient.email;
             form.phone = newClient.phone;
             form.address = newClient.address || "";
-            form.is_active = newClient.is_active;
         } else {
             form.reset();
         }
@@ -387,7 +370,6 @@ const submit = () => {
         formData.append("email", data.email || "");
         formData.append("phone", data.phone || "");
         formData.append("address", data.address || "");
-        formData.append("is_active", data.is_active ? "1" : "0");
 
         // Add logo if exists
         if (data.logo) {

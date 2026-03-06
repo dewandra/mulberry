@@ -15,6 +15,7 @@ class UserController extends Controller
     {
         $users = User::query()
             ->with(['client', 'assignedProjects'])
+            ->where('role', '!=', 'super_admin')
             ->when($request->search, function ($query, $search) {
                 $query->where('full_name', 'like', "%{$search}%")
                       ->orWhere('email', 'like', "%{$search}%");
@@ -139,5 +140,19 @@ class UserController extends Controller
 
         return redirect()->route('users.index')
             ->with('success', 'User deleted successfully.');
+    }
+
+    public function toggleStatus(Request $request, User $user)
+    {
+        // Prevent self-deactivation
+        if ($user->id === $request->user()->id && $user->is_active) {
+            return back()->withErrors(['error' => 'You cannot deactivate your own account.']);
+        }
+
+        $user->is_active   = !$user->is_active;
+        $user->updated_by  = $request->user()->id;
+        $user->save();
+
+        return back()->with('success', 'User status updated.');
     }
 }

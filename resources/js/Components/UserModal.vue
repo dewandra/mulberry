@@ -89,17 +89,75 @@
                     Password <span v-if="!isEditing" class="text-red-500">*</span>
                     <span v-else class="text-gray-500 text-xs">(leave blank to keep current)</span>
                   </label>
-                  <input
-                    id="password"
-                    type="password"
-                    v-model="form.password"
-                    :required="!isEditing"
-                    class="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
-                    :class="{ 'border-red-500': form.errors.password }"
-                  />
-                  <p v-if="form.errors.password" class="mt-1 text-sm text-red-600">
-                    {{ form.errors.password }}
-                  </p>
+                  <div class="flex gap-2">
+                    <!-- Input + show/hide toggle -->
+                    <div class="relative flex-1">
+                      <input
+                        id="password"
+                        :type="showPassword ? 'text' : 'password'"
+                        v-model="form.password"
+                        :required="!isEditing"
+                        placeholder="Min. 8 characters"
+                        class="w-full pr-10 rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 font-mono"
+                        :class="{ 'border-red-500': form.errors.password }"
+                      />
+                      <!-- Eye toggle -->
+                      <button
+                        type="button"
+                        @click="showPassword = !showPassword"
+                        class="absolute inset-y-0 right-2 flex items-center text-gray-400 hover:text-gray-600 transition-colors"
+                        :title="showPassword ? 'Hide password' : 'Show password'"
+                      >
+                        <!-- Eye open -->
+                        <svg v-if="showPassword" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                        </svg>
+                        <!-- Eye closed -->
+                        <svg v-else class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.477 0-8.268-2.943-9.542-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18"/>
+                        </svg>
+                      </button>
+                    </div>
+
+                    <!-- Generate button -->
+                    <button
+                      type="button"
+                      @click="generatePassword"
+                      class="inline-flex items-center gap-1.5 px-3 py-2 bg-violet-600 hover:bg-violet-700 active:bg-violet-800 text-white text-sm font-medium rounded-lg transition-colors whitespace-nowrap shadow-sm"
+                      title="Generate a secure random password"
+                    >
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                      </svg>
+                      Generate
+                    </button>
+
+                    <!-- Copy button -->
+                    <button
+                      type="button"
+                      @click="copyPassword"
+                      :disabled="!form.password"
+                      class="inline-flex items-center gap-1.5 px-3 py-2 border border-gray-300 hover:bg-gray-50 active:bg-gray-100 text-gray-700 text-sm font-medium rounded-lg transition-colors whitespace-nowrap disabled:opacity-40 disabled:cursor-not-allowed"
+                      :title="copied ? 'Copied!' : 'Copy password'"
+                    >
+                      <!-- Check icon when copied -->
+                      <svg v-if="copied" class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                      </svg>
+                      <!-- Clipboard icon normally -->
+                      <svg v-else class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                      </svg>
+                      <span :class="{ 'text-green-600': copied }">{{ copied ? 'Copied!' : 'Copy' }}</span>
+                    </button>
+                  </div>
+
+                  <!-- Hint row -->
+                  <div class="mt-1 flex items-center justify-between">
+                    <p v-if="form.errors.password" class="text-sm text-red-600">{{ form.errors.password }}</p>
+                    <p v-else class="text-xs text-gray-400">{{ form.password.length }} / 8 min characters</p>
+                  </div>
                 </div>
 
                 <!-- Role -->
@@ -129,10 +187,10 @@
                   </p>
                 </div>
 
-                <!-- Client (conditional) -->
+                <!-- Company (conditional) -->
                 <div v-if="showClientField">
                   <label for="client_id" class="block text-sm font-medium text-gray-700 mb-1">
-                    Client <span class="text-red-500">*</span>
+                    Company <span class="text-red-500">*</span>
                   </label>
                   <select
                     id="client_id"
@@ -141,7 +199,7 @@
                     class="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
                     :class="{ 'border-red-500': form.errors.client_id }"
                   >
-                    <option value="">Select Client</option>
+                    <option value="">Select Company</option>
                     <option v-for="client in clients" :key="client.id" :value="client.id">
                       {{ client.company_name }}
                     </option>
@@ -151,22 +209,6 @@
                   </p>
                 </div>
 
-                <!-- Is Active -->
-                <div class="flex items-center">
-                  <input
-                    id="is_active"
-                    type="checkbox"
-                    v-model="form.is_active"
-                    :disabled="isEditingSelf"
-                    class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded disabled:bg-gray-100 disabled:cursor-not-allowed"
-                  />
-                  <label for="is_active" class="ml-2 block text-sm text-gray-700">
-                    Active
-                  </label>
-                  <p v-if="isEditingSelf" class="ml-2 text-sm text-amber-600">
-                    (You cannot deactivate yourself)
-                  </p>
-                </div>
 
                 <!-- Footer Buttons -->
                 <div class="flex items-center justify-end space-x-3 pt-4 border-t border-gray-200 mt-6">
@@ -196,7 +238,7 @@
 </template>
 
 <script setup>
-import { computed, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useForm, usePage } from '@inertiajs/vue3'
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue'
 import Swal from 'sweetalert2'
@@ -213,18 +255,65 @@ const page = usePage()
 const isEditing = computed(() => !!props.user)
 const isEditingSelf = computed(() => props.user?.id === page.props.auth.user.id)
 
+const showPassword = ref(false)
+const copied = ref(false)
+
 const form = useForm({
   full_name: '',
   email: '',
   password: '',
   role: '',
   client_id: '',
-  is_active: true,
 })
 
 const showClientField = computed(() => {
   return ['client', 'pic'].includes(form.role)
 })
+
+// Generate a secure random password (12 chars: upper, lower, digit, symbol)
+const generatePassword = () => {
+  const upper  = 'ABCDEFGHJKLMNPQRSTUVWXYZ'
+  const lower  = 'abcdefghjkmnpqrstuvwxyz'
+  const digits = '23456789'
+  const syms   = '@#$%&*!'
+  const all    = upper + lower + digits + syms
+
+  // Guarantee at least one of each character class
+  let pwd = [
+    upper [Math.floor(Math.random() * upper.length)],
+    lower [Math.floor(Math.random() * lower.length)],
+    digits[Math.floor(Math.random() * digits.length)],
+    syms  [Math.floor(Math.random() * syms.length)],
+  ]
+
+  // Fill the remaining 8 characters from the full pool
+  for (let i = 0; i < 8; i++) {
+    pwd.push(all[Math.floor(Math.random() * all.length)])
+  }
+
+  // Shuffle
+  pwd = pwd.sort(() => Math.random() - 0.5)
+  form.password = pwd.join('')
+  showPassword.value = true
+  copied.value = false
+}
+
+// Copy password to clipboard with visual feedback
+const copyPassword = async () => {
+  if (!form.password) return
+  try {
+    await navigator.clipboard.writeText(form.password)
+    copied.value = true
+    setTimeout(() => { copied.value = false }, 2000)
+  } catch {
+    // Fallback for environments without clipboard API
+    const el = document.getElementById('password')
+    el?.select()
+    document.execCommand('copy')
+    copied.value = true
+    setTimeout(() => { copied.value = false }, 2000)
+  }
+}
 
 // Watch for user changes to populate form (edit mode)
 watch(() => props.user, (newUser) => {
@@ -234,14 +323,15 @@ watch(() => props.user, (newUser) => {
     form.password = ''
     form.role = newUser.role
     form.client_id = newUser.client_id || ''
-    form.is_active = newUser.is_active
   } else {
     form.reset()
   }
 }, { immediate: true })
 
-// Reset form every time modal opens in create mode (user stays null so the watch above won't trigger again)
+// Reset form + UI state every time modal opens
 watch(() => props.show, (visible) => {
+  showPassword.value = false
+  copied.value = false
   if (visible && !props.user) {
     form.reset()
   }

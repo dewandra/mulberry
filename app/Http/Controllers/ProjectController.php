@@ -4,12 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Models\Client;
 use App\Models\Project;
-use App\Models\ProjectPic;
-use App\Models\ProjectStatusHistory;
 use App\Models\User;
+use App\Services\ProjectService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 
@@ -27,40 +25,32 @@ class ProjectController extends Controller
         'project_closed',
     ];
 
+    public function __construct(private ProjectService $projectService) {}
+
+    // ─── Index ────────────────────────────────────────────────────────────────
+
     public function index(Request $request)
     {
+        /** @var \App\Models\User $user */
         $user = Auth::user();
 
         $projects = Project::query()
             ->with(['client:id,company_name,logo_url', 'picUsers:id,full_name,email'])
             ->forUser($user)
-            ->when($request->search, function ($query, $search) {
-                $query->where('project_name', 'like', "%{$search}%")
-                      ->orWhere('project_code', 'like', "%{$search}%");
-            })
-            ->when($request->status, function ($query, $status) {
-                $query->where('status', $status);
-            })
-            ->when($request->priority, function ($query, $priority) {
-                $query->where('priority', $priority);
-            })
-            ->when($request->from, function ($query, $from) {
-                $query->whereDate('deadline', '>=', $from);
-            })
-            ->when($request->to, function ($query, $to) {
-                $query->whereDate('deadline', '<=', $to);
-            })
-            ->latest()
+            ->when($request->search, fn ($q, $s) => $q->where('project_name', 'like', "%{$s}%")
+                                                       ->orWhere('project_code', 'like', "%{$s}%"))
+            ->when($request->status,   fn ($q, $v) => $q->where('status', $v))
+            ->when($request->priority, fn ($q, $v) => $q->where('priority', $v))
+            ->when($request->from,     fn ($q, $v) => $q->whereDate('deadline', '>=', $v))
+            ->when($request->to,       fn ($q, $v) => $q->whereDate('deadline', '<=', $v))
+            ->latest('updated_at')
             ->paginate(12)
             ->withQueryString();
 
-        $clients = Client::active()->get(['id', 'company_name']);
-
-        // PIC users (for assignment in modal) — only for admin/super_admin
-        $picUsers = [];
-        if ($user->hasRole(['super_admin', 'admin'])) {
-            $picUsers = User::where('role', 'pic')->active()->get(['id', 'full_name', 'email', 'client_id']);
-        }
+        $clients  = Client::active()->get(['id', 'company_name']);
+        $picUsers = $user->hasRole(['super_admin', 'admin'])
+            ? User::where('role', 'pic')->active()->get(['id', 'full_name', 'email', 'client_id'])
+            : [];
 
         return Inertia::render('Projects/Index', [
             'projects'  => $projects,
@@ -72,47 +62,38 @@ class ProjectController extends Controller
         ]);
     }
 
+    // ─── Show ─────────────────────────────────────────────────────────────────
+
     public function show(Project $project)
     {
+        /** @var \App\Models\User $user */
         $user = Auth::user();
 
-        // Gate: role-based access check
-        if ($user->hasRole('client') && $project->client_id !== $user->client_id) {
-            abort(403);
-        }
-        if ($user->hasRole('pic')) {
-            $assigned = $project->pics()->where('pic_user_id', $user->id)->exists();
-            if (!$assigned) abort(403);
-        }
+        $this->authorize('view', $project);
 
         $project->load([
             'client:id,company_name,logo_url',
             'picUsers:id,full_name,email',
-            'previews' => function ($q) {
-                $q->orderByDesc('sent_at')
-                  ->with([
-                      'sentBy:id,full_name',
-                      'attachments' => function ($q) {
-                          $q->orderBy('uploaded_at');
-                      },
-                      'feedbacks' => function ($q) {
-                          $q->orderBy('submitted_at')
-                            ->with('submittedBy:id,full_name,role');
-                      },
-                  ]);
-            },
-            'statusHistory' => function ($q) {
-                $q->orderBy('changed_at')->with('changedBy:id,full_name');
-            },
+            'previews' => fn ($q) => $q->orderByDesc('sent_at')->with([
+                'sentBy:id,full_name',
+                'attachments' => fn ($q) => $q->orderBy('uploaded_at'),
+                'feedbacks'   => fn ($q) => $q->orderBy('submitted_at')->with([
+                    'submittedBy:id,full_name,role',
+                    'attachments',
+                ]),
+            ]),
+            'statusHistory' => fn ($q) => $q->orderBy('changed_at')->with('changedBy:id,full_name'),
         ]);
 
         return Inertia::render('Projects/Show', [
             'project'     => $project,
             'statuses'    => self::STATUSES,
             'canManage'   => $user->hasRole(['super_admin', 'admin']),
-            'canFeedback' => $user->hasRole(['client', 'pic', 'admin', 'super_admin']),
+            'canFeedback' => $user->hasRole(['client', 'pic']),
         ]);
     }
+
+    // ─── Store ────────────────────────────────────────────────────────────────
 
     public function store(Request $request)
     {
@@ -130,49 +111,27 @@ class ProjectController extends Controller
         ]);
 
         $validated['created_by'] = Auth::id();
-        $clientId = $validated['client_id'];
         $picIds   = $validated['pic_ids'] ?? [];
+        $clientId = $validated['client_id'];
         unset($validated['pic_ids']);
 
-        // Ensure every assigned PIC belongs to this client
-        if (!empty($picIds)) {
-            $invalidPics = User::whereIn('id', $picIds)
-                ->where(function ($q) use ($clientId) {
-                    $q->where('role', '!=', 'pic')
-                      ->orWhere('client_id', '!=', $clientId);
-                })->exists();
-            if ($invalidPics) {
-                return back()->withErrors(['pic_ids' => 'PIC harus berasal dari perusahaan client yang sama.']);
-            }
+        if (!$this->projectService->validatePics($picIds, $clientId)) {
+            return back()->withErrors(['pic_ids' => 'PIC harus berasal dari perusahaan client yang sama.']);
         }
 
-        // Handle thumbnail upload
         if ($request->hasFile('thumbnail')) {
-            $file     = $request->file('thumbnail');
-            $filename = time() . '_' . $file->getClientOriginalName();
-            $path     = $file->storeAs('projects/thumbnails', $filename, 'public');
-            $validated['thumbnail_url']      = $path;
-            $validated['thumbnail_filename'] = $filename;
+            $validated += $this->projectService->handleThumbnailUpload($request->file('thumbnail'));
         }
         unset($validated['thumbnail']);
 
         $project = Project::create($validated);
-
-        // Assign PICs
-        if (!empty($picIds)) {
-            foreach ($picIds as $picId) {
-                ProjectPic::create([
-                    'project_id'  => $project->id,
-                    'pic_user_id' => $picId,
-                    'assigned_by' => Auth::id(),
-                    'assigned_at' => now(),
-                ]);
-            }
-        }
+        $this->projectService->assignPics($project, $picIds);
 
         return redirect()->route('projects.index')
             ->with('success', "Project {$project->project_code} created successfully.");
     }
+
+    // ─── Update ───────────────────────────────────────────────────────────────
 
     public function update(Request $request, Project $project)
     {
@@ -191,65 +150,35 @@ class ProjectController extends Controller
 
         $oldStatus = $project->status;
         $validated['updated_by'] = Auth::id();
+        $picIds   = $validated['pic_ids'] ?? [];
         $clientId = $validated['client_id'];
-
-        $picIds = $validated['pic_ids'] ?? [];
         unset($validated['pic_ids']);
 
-        // Ensure every assigned PIC belongs to this client
-        if (!empty($picIds)) {
-            $invalidPics = User::whereIn('id', $picIds)
-                ->where(function ($q) use ($clientId) {
-                    $q->where('role', '!=', 'pic')
-                      ->orWhere('client_id', '!=', $clientId);
-                })->exists();
-            if ($invalidPics) {
-                return back()->withErrors(['pic_ids' => 'PIC harus berasal dari perusahaan client yang sama.']);
-            }
+        if (!$this->projectService->validatePics($picIds, $clientId)) {
+            return back()->withErrors(['pic_ids' => 'PIC harus berasal dari perusahaan client yang sama.']);
         }
 
-        // Handle thumbnail upload
         if ($request->hasFile('thumbnail')) {
-            // Delete old thumbnail
-            if ($project->thumbnail_url && Storage::disk('public')->exists($project->thumbnail_url)) {
-                Storage::disk('public')->delete($project->thumbnail_url);
-            }
-            $file     = $request->file('thumbnail');
-            $filename = time() . '_' . $file->getClientOriginalName();
-            $path     = $file->storeAs('projects/thumbnails', $filename, 'public');
-            $validated['thumbnail_url']      = $path;
-            $validated['thumbnail_filename'] = $filename;
+            $validated += $this->projectService->handleThumbnailUpload(
+                $request->file('thumbnail'),
+                $project->thumbnail_url
+            );
         }
         unset($validated['thumbnail']);
 
         $project->update($validated);
 
-        // Log status change if changed
         if ($oldStatus !== $project->status) {
-            ProjectStatusHistory::create([
-                'project_id'  => $project->id,
-                'from_status' => $oldStatus,
-                'to_status'   => $project->status,
-                'notes'       => null,
-                'changed_by'  => Auth::id(),
-                'changed_at'  => now(),
-            ]);
+            $this->projectService->logStatusChange($project, $oldStatus, $project->status);
         }
 
-        // Sync PICs
-        ProjectPic::where('project_id', $project->id)->delete();
-        foreach ($picIds as $picId) {
-            ProjectPic::create([
-                'project_id'  => $project->id,
-                'pic_user_id' => $picId,
-                'assigned_by' => Auth::id(),
-                'assigned_at' => now(),
-            ]);
-        }
+        $this->projectService->syncPics($project, $picIds);
 
-        return redirect()->route('projects.index')
+        return redirect()->route('projects.show', $project->id)
             ->with('success', "Project {$project->project_code} updated successfully.");
     }
+
+    // ─── Destroy ──────────────────────────────────────────────────────────────
 
     public function destroy(Project $project)
     {

@@ -1,7 +1,7 @@
 <template>
   <div class="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
     <Head title="Sign in" />
-    
+
     <div class="max-w-md w-full">
       <!-- Login Card -->
       <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
@@ -99,20 +99,30 @@
           </ul>
         </div>
       </div>
+
+      <!-- App version footer -->
+      <div class="mt-5 flex items-center justify-center gap-1.5">
+        <svg class="w-3 h-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/>
+        </svg>
+        <span class="text-[11px] text-gray-400 font-mono tracking-wide">
+          v{{ appVersion }}
+        </span>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { Head, useForm } from '@inertiajs/vue3'
+import { computed } from 'vue'
+import { Head, useForm, usePage } from '@inertiajs/vue3'
+
+const page = usePage()
+const appVersion = computed(() => page.props.app_version ?? '1.0.0')
 
 defineProps({
-  canResetPassword: {
-    type: Boolean,
-  },
-  status: {
-    type: String,
-  },
+  canResetPassword: { type: Boolean },
+  status: { type: String },
 })
 
 const form = useForm({

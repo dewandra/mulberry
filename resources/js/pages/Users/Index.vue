@@ -32,20 +32,19 @@
           class="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
         >
           <option value="">All Roles</option>
-          <option value="super_admin">Super Admin</option>
           <option value="admin">Admin ACT</option>
           <option value="client">Client</option>
           <option value="pic">PIC</option>
         </select>
       </div>
       <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Client</label>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Company</label>
         <select
           v-model="form.client_id"
           @change="filter"
           class="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
         >
-          <option value="">All Clients</option>
+          <option value="">All Companies</option>
           <option v-for="client in clients" :key="client.id" :value="client.id">
             {{ client.company_name }}
           </option>
@@ -125,7 +124,20 @@
                 </template>
               </td>
               <td class="px-6 py-4 whitespace-nowrap">
-                <span :class="user.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'" class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full">
+                <!-- Status Toggle -->
+                <button
+                  @click="toggleStatus(user)"
+                  :disabled="user.id === $page.props.auth.user.id && user.is_active"
+                  :title="user.id === $page.props.auth.user.id ? 'Cannot deactivate yourself' : (user.is_active ? 'Click to deactivate' : 'Click to activate')"
+                  class="relative inline-flex items-center h-6 w-11 rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-purple-400 disabled:opacity-40 disabled:cursor-not-allowed"
+                  :class="user.is_active ? 'bg-green-500' : 'bg-gray-300'"
+                >
+                  <span
+                    class="inline-block h-4 w-4 bg-white rounded-full shadow transform transition-transform duration-200"
+                    :class="user.is_active ? 'translate-x-6' : 'translate-x-1'"
+                  />
+                </button>
+                <span class="ml-2 text-xs font-medium" :class="user.is_active ? 'text-green-700' : 'text-gray-400'">
                   {{ user.is_active ? 'Active' : 'Inactive' }}
                 </span>
               </td>
@@ -223,10 +235,12 @@
 
 <script setup>
 import { ref, reactive, watch } from 'vue'
-import { Link, router } from '@inertiajs/vue3'
+import { Link, router, usePage } from '@inertiajs/vue3'
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
 import UserModal from '@/Components/UserModal.vue'
 import Swal from 'sweetalert2'
+
+const page = usePage()
 
 const props = defineProps({
   users: Object,
@@ -332,6 +346,19 @@ const deleteUser = (user) => {
         }
       })
     }
+  })
+}
+
+const toggleStatus = (user) => {
+  // Guard: cannot deactivate yourself
+  if (user.id === page.props.auth.user.id && user.is_active) return
+
+  router.patch(route('users.toggle-status', user.id), {}, {
+    preserveScroll: true,
+    onSuccess: () => {
+      // Optimistic UI: flip locally while Inertia reloads
+      user.is_active = !user.is_active
+    },
   })
 }
 </script>

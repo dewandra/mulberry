@@ -34,6 +34,10 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/projects/{project}/feedbacks', [FeedbackController::class, 'store'])->name('projects.feedbacks.store');
     Route::delete('/projects/{project}/feedbacks/{feedback}', [FeedbackController::class, 'destroy'])->name('projects.feedbacks.destroy');
 
+    // Attachment view inline (semua role bisa, access control di controller)
+    Route::get('/projects/{project}/attachments/{attachment}/view', [ProjectAttachmentController::class, 'view'])->name('projects.attachments.view');
+
+
     // Projects - write operations for admin/super_admin only
     Route::middleware(['role:super_admin,admin'])->group(function () {
         Route::post('/projects', [ProjectController::class, 'store'])->name('projects.store');
@@ -50,7 +54,9 @@ Route::middleware(['auth'])->group(function () {
     // Super Admin & Admin routes
     Route::middleware(['role:super_admin'])->group(function () {
         // User Management
+        Route::patch('users/{user}/toggle-status', [App\Http\Controllers\UserController::class, 'toggleStatus'])->name('users.toggle-status');
         Route::resource('users', App\Http\Controllers\UserController::class)->names('users');
+        Route::patch('clients/{client}/toggle-status', [App\Http\Controllers\ClientController::class, 'toggleStatus'])->name('clients.toggle-status');
         Route::resource('clients', App\Http\Controllers\ClientController::class)->names('clients');
     });
 });

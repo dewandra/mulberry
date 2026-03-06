@@ -167,33 +167,38 @@
                 Attachments ({{ preview.attachments?.length ?? 0 }})
               </p>
               <!-- Upload button (admin) -->
-              <label v-if="canManage" class="cursor-pointer inline-flex items-center gap-1 text-xs font-medium text-blue-600 hover:text-blue-800 transition-colors">
+              <label v-if="canManage && preview.id === project.previews?.at(0)?.id && ['preview_sent', 'feedback_received'].includes(project.status)" class="cursor-pointer inline-flex items-center gap-1 text-xs font-medium text-blue-600 hover:text-blue-800 transition-colors">
                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                 </svg>
                 Upload Files
-                <input type="file" multiple class="hidden" @change="uploadAttachments($event, preview)" />
+                <input
+                  type="file"
+                  multiple
+                  class="hidden"
+                  accept="image/jpeg,image/png,application/pdf,.doc,.docx"
+                  @change="uploadAttachments($event, preview)"
+                />
               </label>
             </div>
             <!-- Attachment List -->
             <div v-if="preview.attachments?.length" class="flex flex-wrap gap-2">
-              <a
+              <button
                 v-for="att in preview.attachments"
                 :key="att.id"
-                :href="att.url"
-                target="_blank"
+                @click="openFile(att)"
                 class="group relative inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 hover:bg-blue-50 border border-gray-200 hover:border-blue-300 rounded-lg text-xs text-gray-700 hover:text-blue-700 transition-all"
               >
                 <span>{{ fileIcon(att.mime_type) }}</span>
                 <span class="max-w-28 truncate">{{ att.file_name }}</span>
                 <span class="text-gray-400 text-[10px]">{{ formatSize(att.file_size) }}</span>
                 <!-- delete (admin) -->
-                <button
+                <span
                   v-if="canManage"
-                  @click.prevent="deleteAttachment(att)"
-                  class="ml-1 opacity-0 group-hover:opacity-100 text-red-400 hover:text-red-600 transition-all"
-                >×</button>
-              </a>
+                  @click.stop="deleteAttachment(att)"
+                  class="ml-1 opacity-0 group-hover:opacity-100 text-red-400 hover:text-red-600 transition-all cursor-pointer"
+                >×</span>
+              </button>
             </div>
             <p v-else class="text-xs text-gray-400 italic">No files attached yet.</p>
           </div>
@@ -216,6 +221,21 @@
                     <span class="text-xs text-gray-400">{{ formatDatetime(fb.submitted_at) }}</span>
                   </div>
                   <p class="text-sm text-gray-700 whitespace-pre-wrap">{{ fb.comment }}</p>
+
+                  <!-- Attachment feedback -->
+                  <div v-if="fb.attachments?.length" class="flex flex-wrap gap-1.5 mt-2">
+                    <button
+                      v-for="att in fb.attachments"
+                      :key="att.id"
+                      @click="openFile(att)"
+                      class="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 hover:bg-blue-50 border border-gray-200 hover:border-blue-300 rounded-lg text-xs text-gray-600 hover:text-blue-700 transition-all"
+                    >
+                      <span>{{ fileIcon(att.mime_type) }}</span>
+                      <span class="max-w-24 truncate">{{ att.file_name }}</span>
+                      <span class="text-gray-400 text-[10px]">{{ formatSize(att.file_size) }}</span>
+                    </button>
+                  </div>
+
                 </div>
                 <button v-if="canDeleteFeedback(fb)" @click="deleteFeedback(fb)"
                   class="opacity-0 group-hover:opacity-100 text-gray-300 hover:text-red-500 transition-all p-1 flex-shrink-0">
@@ -228,7 +248,7 @@
             </div>
 
             <!-- New Feedback Form -->
-            <div v-if="canFeedback" class="border-t border-gray-100 pt-3">
+            <div v-if="canFeedback && preview.id === project.previews?.at(0)?.id && ['preview_sent', 'feedback_received'].includes(project.status)" class="border-t border-gray-100 pt-3">
               <div class="flex gap-3">
                 <div class="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-bold text-white"
                   :class="avatarBg(authUser?.role)">
@@ -241,6 +261,33 @@
                     rows="2"
                     class="w-full rounded-xl border-gray-300 shadow-sm text-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 resize-none"
                   />
+                  <!-- File attachment untuk feedback -->
+                  <div class="mb-2">
+                    <label class="cursor-pointer inline-flex items-center gap-1.5 text-xs font-medium text-gray-500 hover:text-blue-600 transition-colors">
+                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                      </svg>
+                      Upload Files
+                      <input
+                        type="file"
+                        multiple
+                        class="hidden"
+                        accept="image/jpeg,image/png,application/pdf,.doc,.docx"
+                        @change="feedbackFiles[preview.id] = Array.from($event.target.files)"
+                      />
+                    </label>
+                    <!-- Preview nama file terpilih -->
+                    <div v-if="feedbackFiles[preview.id]?.length" class="flex flex-wrap gap-1 mt-1">
+                      <span
+                        v-for="(f, i) in feedbackFiles[preview.id]"
+                        :key="i"
+                        class="px-2 py-0.5 bg-blue-50 text-blue-700 text-[11px] rounded-full border border-blue-200 flex items-center gap-1"
+                      >
+                        📎 {{ f.name }}
+                        <button @click="feedbackFiles[preview.id].splice(i, 1)" class="text-blue-400 hover:text-red-500">×</button>
+                      </span>
+                    </div>
+                  </div>
                   <div class="flex justify-end mt-2">
                     <button
                       @click="submitFeedback(preview)"
@@ -306,7 +353,56 @@
     @close="showPreviewModal = false"
     @saved="showPreviewModal = false"
   />
+
+  <!-- ── File Viewer Modal ──────────────────────────────────────────────── -->
+  <Teleport to="body">
+    <div
+      v-if="fileViewer.show"
+      class="fixed inset-0 z-[999] flex flex-col bg-black/90"
+      @keydown.esc="closeViewer"
+      tabindex="-1"
+    >
+      <!-- Header -->
+      <div class="flex items-center justify-between px-4 py-2 bg-gray-900 text-white flex-shrink-0">
+        <span class="text-sm font-medium truncate max-w-xs">{{ fileViewer.name }}</span>
+        <div class="flex items-center gap-3">
+          <a
+            :href="fileViewer.blobUrl"
+            :download="fileViewer.name"
+            class="text-xs px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors"
+          >⬇ Download</a>
+          <button @click="closeViewer" class="text-gray-400 hover:text-white transition-colors text-xl leading-none">✕</button>
+        </div>
+      </div>
+      <!-- Viewer Body -->
+      <div class="flex-1 overflow-hidden">
+        <!-- Image -->
+        <div v-if="fileViewer.type === 'image'" class="w-full h-full flex items-center justify-center p-4">
+          <img :src="fileViewer.blobUrl" class="max-w-full max-h-full object-contain rounded shadow-2xl" :alt="fileViewer.name" />
+        </div>
+        <!-- PDF -->
+        <iframe
+          v-else-if="fileViewer.type === 'pdf'"
+          :src="fileViewer.blobUrl"
+          class="w-full h-full border-none"
+          title="PDF Viewer"
+        />
+        <!-- DOC/DOCX & others: tidak bisa preview natively -->
+        <div v-else class="w-full h-full flex flex-col items-center justify-center text-center text-white gap-4 p-6">
+          <span class="text-6xl">📄</span>
+          <p class="text-lg font-semibold">{{ fileViewer.name }}</p>
+          <p class="text-gray-400 text-sm">Tipe file ini tidak dapat di-preview di browser.<br>Silakan download untuk membukanya.</p>
+          <a
+            :href="fileViewer.blobUrl"
+            :download="fileViewer.name"
+            class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold transition-colors"
+          >⬇ Download {{ fileViewer.name }}</a>
+        </div>
+      </div>
+    </div>
+  </Teleport>
 </template>
+
 
 <script setup>
 import { ref, reactive, computed } from 'vue'
@@ -314,6 +410,7 @@ import { Link, router, usePage } from '@inertiajs/vue3'
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
 import PreviewModal from '@/Components/PreviewModal.vue'
 import Swal from 'sweetalert2'
+import { statusLabelShort, coverBg, priorityClass, avatarBg, initials } from '@/composables/useProject'
 
 const props = defineProps({
   project:     Object,
@@ -328,6 +425,15 @@ const showPreviewModal = ref(false)
 
 const feedbackForms      = reactive({})
 const submittingFeedback = reactive({})
+const feedbackFiles = reactive({})
+
+// ── File viewer state ─────────────────────────────────────────────────────────
+const fileViewer = reactive({ show: false, blobUrl: null, name: '', type: '' })
+const closeViewer = () => {
+  if (fileViewer.blobUrl) URL.revokeObjectURL(fileViewer.blobUrl)
+  fileViewer.show = false
+  fileViewer.blobUrl = null
+}
 
 // ─── Status helpers ───────────────────────────────────────────────────────────
 
@@ -339,17 +445,7 @@ const statusOrder = computed(() => {
 
 const isCompleted = (s) => statusOrder.value[s] < statusOrder.value[project.value.status]
 
-const statusLabel = (s) => ({
-  brief:                    'Brief',
-  scheduled:                'Scheduled',
-  work_in_progress:         'WIP',
-  preview_sent:             'Preview Sent',
-  feedback_received:        'Feedback',
-  artwork_approved:         'Approved',
-  final_artwork_preparation:'FA Prep',
-  fa_sent:                  'FA Sent',
-  project_closed:           'Closed',
-}[s] ?? s)
+const statusLabel = (s) => statusLabelShort(s)
 
 // map each status → what the next quick-action button should be
 const nextAction = computed(() => {
@@ -377,11 +473,24 @@ const submitFeedback = (preview) => {
   const comment = feedbackForms[preview.id]?.trim()
   if (!comment) return
   submittingFeedback[preview.id] = true
-  router.post(route('projects.feedbacks.store', project.value.id), { comment, preview_id: preview.id }, {
+
+  const data = new FormData()
+  data.append('comment', comment)
+  data.append('preview_id', preview.id)
+  if (feedbackFiles[preview.id]?.length) {
+    feedbackFiles[preview.id].forEach(f => data.append('attachments[]', f))
+  }
+
+  router.post(route('projects.feedbacks.store', project.value.id), data, {
     preserveScroll: true,
-    onSuccess: () => { feedbackForms[preview.id] = ''; submittingFeedback[preview.id] = false },
+    forceFormData: true,
+    onSuccess: () => { 
+      feedbackForms[preview.id] = ''; 
+      feedbackFiles[preview.id] = []; 
+      submittingFeedback[preview.id] = false 
+    },
     onError:   () => { submittingFeedback[preview.id] = false },
-  })
+  });
 }
 
 const deletePreview = (preview) => {
@@ -421,6 +530,25 @@ const updateStatus = (newStatus) => {
 }
 
 // Attachment upload
+const openingFile = reactive({})
+
+/**
+ * Tampilkan file langsung di modal iframe tanpa fetch/blob.
+ * IDM mengintercept: klik link, window.open, fetch() response PDF.
+ * IDM TIDAK intercept: iframe.src yang di-set via JavaScript dalam page aktif.
+ */
+const openFile = (att) => {
+  const mime = att.mime_type ?? ''
+  if (mime === 'application/pdf') {
+    Object.assign(fileViewer, { show: true, blobUrl: att.url, name: att.file_name, type: 'pdf' })
+  } else if (mime.startsWith('image/')) {
+    Object.assign(fileViewer, { show: true, blobUrl: att.url, name: att.file_name, type: 'image' })
+  } else {
+    // DOC/lainnya: tidak bisa preview, tampilkan info download
+    Object.assign(fileViewer, { show: true, blobUrl: att.url, name: att.file_name, type: 'other' })
+  }
+}
+
 const uploadAttachments = (event, preview) => {
   const files = event.target.files
   if (!files || !files.length) return
@@ -443,35 +571,8 @@ const canDeleteFeedback = (fb) => props.canManage || fb.submitted_by?.id === aut
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-const coverBg = (status) => ({
-  brief:                    'bg-gradient-to-br from-gray-400 to-gray-600',
-  scheduled:                'bg-gradient-to-br from-blue-400 to-blue-600',
-  work_in_progress:         'bg-gradient-to-br from-amber-400 to-orange-500',
-  preview_sent:             'bg-gradient-to-br from-purple-400 to-purple-600',
-  feedback_received:        'bg-gradient-to-br from-orange-400 to-red-500',
-  artwork_approved:         'bg-gradient-to-br from-green-400 to-emerald-600',
-  final_artwork_preparation:'bg-gradient-to-br from-teal-400 to-cyan-600',
-  fa_sent:                  'bg-gradient-to-br from-indigo-400 to-indigo-600',
-  project_closed:           'bg-gradient-to-br from-gray-700 to-gray-900',
-}[status] || 'bg-gradient-to-br from-gray-400 to-gray-600')
-
-const priorityClass = (priority) => ({
-  high:   'bg-red-500 text-white',
-  normal: 'bg-blue-500 text-white',
-  low:    'bg-gray-200 text-gray-700',
-}[priority] || 'bg-gray-200 text-gray-700')
-
-const avatarBg = (role) => ({
-  super_admin: 'bg-purple-500',
-  admin:       'bg-blue-500',
-  client:      'bg-emerald-500',
-  pic:         'bg-orange-500',
-}[role] || 'bg-gray-400')
-
-const initials = (name) => {
-  if (!name) return '?'
-  return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
-}
+// ─── Helpers moved to @/composables/useProject.js ────────────────────────────
+// coverBg, priorityClass, avatarBg, initials
 
 const fileIcon = (mime) => {
   if (!mime) return '📎'
