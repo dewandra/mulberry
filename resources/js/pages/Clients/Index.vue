@@ -76,7 +76,19 @@
                 {{ client.phone }}
               </td>
               <td class="px-6 py-4 whitespace-nowrap align-middle">
-                <span :class="client.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'" class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full">
+                <!-- Status Toggle -->
+                <button
+                  @click="toggleStatus(client)"
+                  :title="client.is_active ? 'Click to deactivate' : 'Click to activate'"
+                  class="relative inline-flex items-center h-6 w-11 rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-purple-400"
+                  :class="client.is_active ? 'bg-green-500' : 'bg-gray-300'"
+                >
+                  <span
+                    class="inline-block h-4 w-4 bg-white rounded-full shadow transform transition-transform duration-200"
+                    :class="client.is_active ? 'translate-x-6' : 'translate-x-1'"
+                  />
+                </button>
+                <span class="ml-2 text-xs font-medium" :class="client.is_active ? 'text-green-700' : 'text-gray-400'">
                   {{ client.is_active ? 'Active' : 'Inactive' }}
                 </span>
               </td>
@@ -264,6 +276,15 @@ const deleteClient = (client) => {
         }
       })
     }
+  })
+}
+
+const toggleStatus = (client) => {
+  router.patch(route('clients.toggle-status', client.id), {}, {
+    preserveScroll: true,
+    onSuccess: () => {
+      client.is_active = !client.is_active
+    },
   })
 }
 </script>

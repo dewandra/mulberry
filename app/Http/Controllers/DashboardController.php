@@ -63,10 +63,10 @@ class DashboardController extends Controller
             'active_projects'   => $totalProjects - ($byStatus['project_closed'] ?? 0),
         ];
 
-        // Recent projects (last 8)
+        // Recent projects (last 6)
         $recentProjects = Project::with(['client:id,company_name', 'picUsers:id,full_name'])
             ->latest('updated_at')
-            ->limit(8)
+            ->limit(6)
             ->get();
 
         return Inertia::render('Dashboard/Index', [

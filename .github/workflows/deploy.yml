@@ -1,0 +1,60 @@
+name: Deploy & Set App Version
+
+on:
+  push:
+    branches: [main, master]
+  create:
+    tags:
+      - "v*" # triggered when you push a tag like v1.2.3
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # needed for git describe
+
+      # ── Resolve version ────────────────────────────────────────────────────
+      # Priority:
+      #   1. If this is a tag push (v1.2.3)  → use the tag name as-is
+      #   2. Otherwise                        → use latest tag + commit hash
+      #                                         e.g. "1.2.3-5-gabcdef1"
+      - name: Resolve app version
+        id: version
+        run: |
+          if [[ "${{ github.ref }}" == refs/tags/* ]]; then
+            VERSION="${{ github.ref_name }}"
+            VERSION="${VERSION#v}"   # strip leading 'v'  →  1.2.3
+          else
+            VERSION=$(git describe --tags --always 2>/dev/null | sed 's/^v//')
+            # Fallback if no tags exist yet
+            if [ -z "$VERSION" ]; then
+              VERSION="1.0.0+$(git rev-parse --short HEAD)"
+            fi
+          fi
+          echo "APP_VERSION=$VERSION" >> $GITHUB_OUTPUT
+          echo "Resolved version: $VERSION"
+
+      # ── Write version into .env on your server ─────────────────────────────
+      # If using SSH deploy, replace the steps below with your actual deployment
+      # step. The key idea: pass APP_VERSION as an environment variable.
+      - name: Show resolved version (replace with your deploy step)
+        run: echo "Deploy with APP_VERSION=${{ steps.version.outputs.APP_VERSION }}"
+
+      # ─── Example for SSH-based deploy ──────────────────────────────────────
+      # - name: Deploy via SSH
+      #   uses: appleboy/ssh-action@v1
+      #   with:
+      #     host: ${{ secrets.SSH_HOST }}
+      #     username: ${{ secrets.SSH_USER }}
+      #     key: ${{ secrets.SSH_PRIVATE_KEY }}
+      #     script: |
+      #       cd /var/www/mulberry
+      #       git pull origin main
+      #       sed -i "s/^APP_VERSION=.*/APP_VERSION=${{ steps.version.outputs.APP_VERSION }}/" .env
+      #       php artisan config:clear
+      #       php artisan config:cache
+      #       npm ci && npm run build

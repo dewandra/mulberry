@@ -4,20 +4,34 @@ namespace App\Http\Controllers;
 
 use App\Models\Feedback;
 use App\Models\Project;
-use App\Models\ProjectStatusHistory;
+use App\Models\ProjectAttachment;
+use App\Services\ProjectService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class FeedbackController extends Controller
 {
+    public function __construct(private ProjectService $projectService) {}
+
     public function store(Request $request, Project $project)
     {
+        $this->authorize('submitFeedback', $project);
+
+        // Only allowed when project is in an active review status
+        abort_if(
+            !in_array($project->status, ['preview_sent', 'feedback_received']),
+            403,
+            'Feedback can only be submitted when a preview is under review.'
+        );
+
         $validated = $request->validate([
-            'comment'    => ['required', 'string', 'max:5000'],
-            'preview_id' => ['nullable', 'uuid', 'exists:project_previews,id'],
+            'comment'       => ['required', 'string', 'max:5000'],
+            'preview_id'    => ['nullable', 'uuid', 'exists:project_previews,id'],
+            'attachments'   => ['nullable', 'array', 'max:5'],
+            'attachments.*' => ['file', 'max:20480', 'mimes:jpg,jpeg,png,pdf,doc,docx'],
         ]);
 
-        Feedback::create([
+        $feedback = Feedback::create([
             'project_id'   => $project->id,
             'preview_id'   => $validated['preview_id'] ?? null,
             'comment'      => $validated['comment'],
@@ -26,22 +40,36 @@ class FeedbackController extends Controller
             'is_active'    => true,
         ]);
 
-        // Update project status → feedback_received (if currently preview_sent)
+        // Upload attachments if any
+        if ($request->hasFile('attachments')) {
+            foreach ($request->file('attachments') as $file) {
+                $mime     = $file->getMimeType();
+                $filename = time() . '_' . $file->getClientOriginalName();
+                $path     = $file->storeAs("projects/{$project->id}/feedback-attachments", $filename, 'public');
+
+                ProjectAttachment::create([
+                    'project_id'  => $project->id,
+                    'preview_id'  => $validated['preview_id'] ?? null,
+                    'feedback_id' => $feedback->id,
+                    'file_name'   => $file->getClientOriginalName(),
+                    'file_url'    => $path,
+                    'file_type'   => str_starts_with($mime, 'image/') ? 'preview' : 'other',
+                    'file_size'   => $file->getSize(),
+                    'mime_type'   => $mime,
+                    'uploaded_by' => Auth::id(),
+                    'uploaded_at' => now(),
+                ]);
+            }
+        }
+
+        // Auto-transition project status preview_sent → feedback_received
         if ($project->status === 'preview_sent') {
             $oldStatus = $project->status;
-            $project->update([
-                'status'     => 'feedback_received',
-                'updated_by' => Auth::id(),
-            ]);
-
-            ProjectStatusHistory::create([
-                'project_id'  => $project->id,
-                'from_status' => $oldStatus,
-                'to_status'   => 'feedback_received',
-                'notes'       => 'Feedback submitted by ' . Auth::user()->full_name,
-                'changed_by'  => Auth::id(),
-                'changed_at'  => now(),
-            ]);
+            $project->update(['status' => 'feedback_received', 'updated_by' => Auth::id()]);
+            $this->projectService->logStatusChange(
+                $project, $oldStatus, 'feedback_received',
+                'Feedback submitted by ' . Auth::user()->full_name
+            );
         }
 
         return redirect()->route('projects.show', $project->id)
@@ -50,13 +78,7 @@ class FeedbackController extends Controller
 
     public function destroy(Project $project, Feedback $feedback)
     {
-        abort_if($feedback->project_id !== $project->id, 404);
-
-        // Only the submitter or admin can delete
-        $user = Auth::user();
-        if ($feedback->submitted_by !== $user->id && !$user->hasRole(['super_admin', 'admin'])) {
-            abort(403);
-        }
+        $this->authorize('deleteFeedback', [$project, $feedback]);
 
         $feedback->deleted_by = Auth::id();
         $feedback->save();

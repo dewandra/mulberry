@@ -110,4 +110,13 @@ class ClientController extends Controller
 
         return redirect()->route('clients.index')->with('success', 'Client deleted successfully.');
     }
+
+    public function toggleStatus(Client $client)
+    {
+        $client->is_active  = !$client->is_active;
+        $client->updated_by = Auth::id();
+        $client->save();
+
+        return back()->with('success', 'Company status updated.');
+    }
 }
