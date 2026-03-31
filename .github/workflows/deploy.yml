@@ -1,11 +1,11 @@
-name: Deploy & Set App Version
+name: Deploy to Staging
 
 on:
   push:
-    branches: [main, master]
+    branches: [main]
   create:
     tags:
-      - "v*" # triggered when you push a tag like v1.2.3
+      - "v*"
 
 jobs:
   deploy:
@@ -15,22 +15,17 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # needed for git describe
+          fetch-depth: 0
 
-      # ── Resolve version ────────────────────────────────────────────────────
-      # Priority:
-      #   1. If this is a tag push (v1.2.3)  → use the tag name as-is
-      #   2. Otherwise                        → use latest tag + commit hash
-      #                                         e.g. "1.2.3-5-gabcdef1"
+      # ── Resolve version ───────────────────────────────────────────────
       - name: Resolve app version
         id: version
         run: |
           if [[ "${{ github.ref }}" == refs/tags/* ]]; then
             VERSION="${{ github.ref_name }}"
-            VERSION="${VERSION#v}"   # strip leading 'v'  →  1.2.3
+            VERSION="${VERSION#v}"
           else
             VERSION=$(git describe --tags --always 2>/dev/null | sed 's/^v//')
-            # Fallback if no tags exist yet
             if [ -z "$VERSION" ]; then
               VERSION="1.0.0+$(git rev-parse --short HEAD)"
             fi
@@ -38,23 +33,59 @@ jobs:
           echo "APP_VERSION=$VERSION" >> $GITHUB_OUTPUT
           echo "Resolved version: $VERSION"
 
-      # ── Write version into .env on your server ─────────────────────────────
-      # If using SSH deploy, replace the steps below with your actual deployment
-      # step. The key idea: pass APP_VERSION as an environment variable.
-      - name: Show resolved version (replace with your deploy step)
-        run: echo "Deploy with APP_VERSION=${{ steps.version.outputs.APP_VERSION }}"
+      # ── Install PHP dependencies ──────────────────────────────────────
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
 
-      # ─── Example for SSH-based deploy ──────────────────────────────────────
-      # - name: Deploy via SSH
-      #   uses: appleboy/ssh-action@v1
-      #   with:
-      #     host: ${{ secrets.SSH_HOST }}
-      #     username: ${{ secrets.SSH_USER }}
-      #     key: ${{ secrets.SSH_PRIVATE_KEY }}
-      #     script: |
-      #       cd /var/www/mulberry
-      #       git pull origin main
-      #       sed -i "s/^APP_VERSION=.*/APP_VERSION=${{ steps.version.outputs.APP_VERSION }}/" .env
-      #       php artisan config:clear
-      #       php artisan config:cache
-      #       npm ci && npm run build
+      - name: Install Composer dependencies
+        run: composer install --no-dev --optimize-autoloader --no-interaction
+
+      # ── Build frontend assets ─────────────────────────────────────────
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install npm dependencies
+        run: npm ci
+
+      - name: Build assets
+        run: npm run build
+
+      # ── Deploy via rsync ──────────────────────────────────────────────
+      - name: Deploy to server
+        uses: burnett01/rsync-deployments@7.0.1
+        with:
+          switches: -avz --delete --exclude-from='.rsyncignore'
+          path: ./
+          remote_path: ${{ secrets.DEPLOY_PATH }}/
+          remote_host: ${{ secrets.SSH_HOST }}
+          remote_port: ${{ secrets.SSH_PORT }}
+          remote_user: ${{ secrets.SSH_USER }}
+          remote_key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      # ── Post-deploy commands ──────────────────────────────────────────
+      - name: Run post-deploy commands
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          port: ${{ secrets.SSH_PORT }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd ${{ secrets.DEPLOY_PATH }}
+
+            # Update version in .env
+            sed -i "s/^APP_VERSION=.*/APP_VERSION=${{ steps.version.outputs.APP_VERSION }}/" .env
+
+            # Laravel optimization
+            php artisan migrate --force
+            php artisan config:cache
+            php artisan route:cache
+            php artisan view:cache
+            php artisan app:clear-cache
+
+            echo "✅ Deploy selesai! Version: ${{ steps.version.outputs.APP_VERSION }}"
