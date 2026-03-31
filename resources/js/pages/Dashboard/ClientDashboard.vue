@@ -57,7 +57,7 @@
       </Link>
       <div v-if="!projects?.length" class="px-6 py-12 text-center text-gray-400 text-sm">
         <span class="text-3xl block mb-2">📭</span>
-        No projects assigned yet.
+        No projects assigned.
       </div>
     </div>
   </div>

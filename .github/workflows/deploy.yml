@@ -55,37 +55,36 @@ jobs:
       - name: Build assets
         run: npm run build
 
-      # ── Deploy via rsync ──────────────────────────────────────────────
-      - name: Deploy to server
-        uses: burnett01/rsync-deployments@7.0.1
+      # ── Deploy via FTP ────────────────────────────────────────────────
+      - name: Deploy to server via FTP
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
-          switches: -avz --delete --exclude-from='.rsyncignore'
-          path: ./
-          remote_path: ${{ secrets.DEPLOY_PATH }}/
-          remote_host: ${{ secrets.SSH_HOST }}
-          remote_port: ${{ secrets.SSH_PORT }}
-          remote_user: ${{ secrets.SSH_USER }}
-          remote_key: ${{ secrets.SSH_PRIVATE_KEY }}
+          server: ${{ secrets.FTP_HOST }}
+          username: ${{ secrets.FTP_USER }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          server-dir: /
+          exclude: |
+            **/.git*
+            **/.git*/**
+            **/node_modules/**
+            **/.env
+            **/storage/logs/**
+            **/storage/framework/cache/data/**
+            **/storage/framework/sessions/**
+            **/storage/framework/views/**
+            **/tests/**
+            **/phpunit.xml
+            **/.editorconfig
+            **/README.md
 
-      # ── Post-deploy commands ──────────────────────────────────────────
+      # ── Post-deploy: run artisan commands via webhook ─────────────────
       - name: Run post-deploy commands
-        uses: appleboy/ssh-action@v1
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          port: ${{ secrets.SSH_PORT }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          script: |
-            cd ${{ secrets.DEPLOY_PATH }}
-
-            # Update version in .env
-            sed -i "s/^APP_VERSION=.*/APP_VERSION=${{ steps.version.outputs.APP_VERSION }}/" .env
-
-            # Laravel optimization
-            php artisan migrate --force
-            php artisan config:cache
-            php artisan route:cache
-            php artisan view:cache
-            php artisan app:clear-cache
-
-            echo "✅ Deploy selesai! Version: ${{ steps.version.outputs.APP_VERSION }}"
+        run: |
+          echo "Calling deploy webhook..."
+          RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" \
+            "${{ secrets.APP_URL }}/deploy-webhook.php?token=${{ secrets.DEPLOY_TOKEN }}&version=${{ steps.version.outputs.APP_VERSION }}")
+          if [ "$RESPONSE" = "200" ]; then
+            echo "✅ Post-deploy commands executed successfully"
+          else
+            echo "⚠️ Webhook returned HTTP $RESPONSE"
+          fi
