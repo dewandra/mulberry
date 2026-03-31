@@ -1,0 +1,15 @@
+.git
+.github
+node_modules
+.env
+.env.example
+storage/app/public
+storage/framework/cache/data
+storage/framework/sessions
+storage/framework/views
+storage/logs
+tests
+phpunit.xml
+.editorconfig
+README.md
+debug_client_logo.md
