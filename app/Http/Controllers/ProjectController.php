@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Client;
 use App\Models\Project;
 use App\Models\User;
+use App\Services\CacheService;
 use App\Services\ProjectService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -25,7 +26,10 @@ class ProjectController extends Controller
         'project_closed',
     ];
 
-    public function __construct(private ProjectService $projectService) {}
+    public function __construct(
+        private ProjectService $projectService,
+        private CacheService $cache,
+        ) {}
 
     // ─── Index ────────────────────────────────────────────────────────────────
 
@@ -47,10 +51,8 @@ class ProjectController extends Controller
             ->paginate(12)
             ->withQueryString();
 
-        $clients  = Client::active()->get(['id', 'company_name']);
-        $picUsers = $user->hasRole(['super_admin', 'admin'])
-            ? User::where('role', 'pic')->active()->get(['id', 'full_name', 'email', 'client_id'])
-            : [];
+        $clients = $this->cache->getActiveClients();
+        $picUsers = $user->hasRole(['super_admin', 'admin']) ? $this->cache->getPicUsers() : [];
 
         return Inertia::render('Projects/Index', [
             'projects'  => $projects,

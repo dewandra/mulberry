@@ -47,7 +47,7 @@ export const statusClass = (s) => ({
   artwork_approved:         'bg-green-100 text-green-700',
   final_artwork_preparation:'bg-teal-100 text-teal-700',
   fa_sent:                  'bg-indigo-100 text-indigo-700',
-  project_closed:           'bg-gray-800 text-gray-100',
+  project_closed:           'bg-gray-100 text-gray-700',
 }[s] ?? 'bg-gray-100 text-gray-700')
 
 /** Dot + ring indicator (used in dashboard activity list). */

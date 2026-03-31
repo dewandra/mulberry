@@ -2,6 +2,12 @@
 
 namespace App\Providers;
 
+use App\Models\Client;
+use App\Models\Project;
+use App\Models\User;
+use App\Observers\ClientObserver;
+use App\Observers\ProjectObserver;
+use App\Observers\UserObserver;
 use Illuminate\Support\Facades\Vite;
 use Illuminate\Support\ServiceProvider;
 
@@ -20,6 +26,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Project::observe(ProjectObserver::class);
+        Client::observe(ClientObserver::class);
+        User::observe(UserObserver::class);
         Vite::prefetch(concurrency: 3);
     }
 }

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use App\Models\Client;
+use App\Services\CacheService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
@@ -11,6 +12,7 @@ use Inertia\Inertia;
 
 class UserController extends Controller
 {
+    public function __construct(private CacheService $cache){}
     public function index(Request $request)
     {
         $users = User::query()
@@ -33,7 +35,7 @@ class UserController extends Controller
             ->paginate(10)
             ->withQueryString();
 
-        $clients = Client::active()->get(['id', 'company_name']);
+        $clients = $this->cache->getActiveClients();
 
         return Inertia::render('Users/Index', [
             'users' => $users,
@@ -44,8 +46,7 @@ class UserController extends Controller
 
     public function create()
     {
-        $clients = Client::active()->get(['id', 'company_name']);
-        
+        $clients = $this->cache->getActiveClients();
         return Inertia::render('Users/Create', [
             'clients' => $clients,
         ]);
@@ -78,8 +79,8 @@ class UserController extends Controller
 
     public function edit(User $user)
     {
-        $clients = Client::active()->get(['id', 'company_name']);
-        
+        $clients = $this->cache->getActiveClients();
+           
         return Inertia::render('Users/Edit', [
             'user' => $user->load('client'),
             'clients' => $clients,
