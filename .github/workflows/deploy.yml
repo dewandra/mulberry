@@ -3,7 +3,6 @@ name: Deploy to Staging
 on:
   push:
     branches: [main]
-  create:
     tags:
       - "v*"
 
@@ -67,16 +66,14 @@ jobs:
             **/.git*
             **/.git*/**
             **/node_modules/**
-            **/.env
-            **/storage/logs/**
-            **/storage/framework/cache/data/**
-            **/storage/framework/sessions/**
-            **/storage/framework/views/**
             **/tests/**
-            **/phpunit.xml
-            **/.editorconfig
-            **/README.md
-
+            **/.env*
+            .gitignore
+            README.md
+            bootstrap/cache/**
+            storage/**
+            phpunit.xml
+            .editorconfig
       # ── Post-deploy: run artisan commands via webhook ─────────────────
       - name: Run post-deploy commands
         run: |
