@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Observers\ClientObserver;
 use App\Observers\ProjectObserver;
 use App\Observers\UserObserver;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Vite;
 use Illuminate\Support\ServiceProvider;
 
@@ -26,6 +27,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Schema::defaultStringLength(191);
+
         Project::observe(ProjectObserver::class);
         Client::observe(ClientObserver::class);
         User::observe(UserObserver::class);
