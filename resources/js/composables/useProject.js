@@ -45,7 +45,7 @@ export const statusClass = (s) => ({
   preview_sent:             'bg-purple-100 text-purple-700',
   feedback_received:        'bg-orange-100 text-orange-700',
   artwork_approved:         'bg-green-100 text-green-700',
-  final_artwork_preparation:'bg-teal-100 text-teal-700',
+  final_artwork_preparation:'bg-pink-100 text-pink-700',
   fa_sent:                  'bg-indigo-100 text-indigo-700',
   project_closed:           'bg-gray-100 text-gray-700',
 }[s] ?? 'bg-gray-100 text-gray-700')
@@ -58,7 +58,7 @@ export const statusDotRing = (s) => ({
   preview_sent:             'bg-purple-500 ring-purple-200',
   feedback_received:        'bg-orange-500 ring-orange-200',
   artwork_approved:         'bg-green-500 ring-green-200',
-  final_artwork_preparation:'bg-teal-500 ring-teal-200',
+  final_artwork_preparation:'bg-pink-500 ring-pink-200',
   fa_sent:                  'bg-indigo-500 ring-indigo-200',
   project_closed:           'bg-gray-700 ring-gray-300',
 }[s] ?? 'bg-gray-400 ring-gray-200')
@@ -71,7 +71,7 @@ export const statusBarColor = (s) => ({
   preview_sent:             'bg-gradient-to-r from-purple-500 to-violet-500',
   feedback_received:        'bg-gradient-to-r from-orange-400 to-pink-400',
   artwork_approved:         'bg-gradient-to-r from-green-400 to-emerald-500',
-  final_artwork_preparation:'bg-gradient-to-r from-teal-400 to-cyan-500',
+  final_artwork_preparation:'bg-gradient-to-r from-pink-400 to-rose-500',
   fa_sent:                  'bg-gradient-to-r from-indigo-500 to-blue-600',
   project_closed:           'bg-gradient-to-r from-gray-600 to-gray-800',
 }[s] ?? 'bg-gray-300')
@@ -84,7 +84,7 @@ export const statusBarClass = (s) => ({
   preview_sent:             'bg-purple-500',
   feedback_received:        'bg-orange-500',
   artwork_approved:         'bg-green-500',
-  final_artwork_preparation:'bg-teal-500',
+  final_artwork_preparation:'bg-pink-500',
   fa_sent:                  'bg-indigo-500',
   project_closed:           'bg-gray-800',
 }[s] ?? 'bg-gray-300')
@@ -112,7 +112,7 @@ export const coverBg = (status) => ({
   preview_sent:             'bg-gradient-to-br from-purple-400 to-purple-600',
   feedback_received:        'bg-gradient-to-br from-orange-400 to-red-500',
   artwork_approved:         'bg-gradient-to-br from-green-400 to-emerald-600',
-  final_artwork_preparation:'bg-gradient-to-br from-teal-400 to-cyan-600',
+  final_artwork_preparation:'bg-gradient-to-br from-pink-400 to-rose-600',
   fa_sent:                  'bg-gradient-to-br from-indigo-400 to-indigo-600',
   project_closed:           'bg-gradient-to-br from-gray-700 to-gray-900',
 }[status] ?? 'bg-gradient-to-br from-gray-400 to-gray-600')

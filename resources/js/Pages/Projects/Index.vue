@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <AuthenticatedLayout title="Project Status Dashboard">
 
     <!-- â”€â”€â”€ Dashboard Header â”€â”€â”€ -->
@@ -31,14 +31,14 @@
           <h1 class="text-2xl font-bold text-gray-900" style="font-family:'Sora',sans-serif;">Project Status Dashboard</h1>
           <p class="text-sm text-gray-500 mt-0.5">
             <span class="font-medium text-gray-700">{{ pageDisplayName }}</span>
-            <span class="mx-1.5 text-gray-300">Â·</span>
-            Showing <span class="font-medium text-gray-700">{{ projects.from }}â€“{{ projects.to }}</span> of
+            <span class="mx-1.5 text-gray-300">&middot;</span>
+            Showing <span class="font-medium text-gray-700">{{ projects.from }}&ndash;{{ projects.to }}</span> of
             <span class="font-medium text-gray-700">{{ projects.total }}</span> projects
           </p>
           <p class="text-xs text-gray-400 mt-0.5">
             Report Period:
-            <span>{{ form.from || 'â€”' }}</span> to <span>{{ form.to || 'â€”' }}</span>
-            <span class="mx-1">Â·</span>Generated {{ today }}
+            <span>{{ form.from || '–' }}</span> to <span>{{ form.to || '–' }}</span>
+            <span class="mx-1">&middot;</span>Generated {{ today }}
           </p>
         </div>
       </div>
@@ -62,7 +62,7 @@
     </div>
 
 
-    <!-- â”€â”€â”€ Stats Cards â”€â”€â”€ -->
+    <!-- ——— Stats Cards ——— -->
     <div class="mb-6 grid grid-cols-2 sm:grid-cols-4 gap-4">
       <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
         <p class="text-xs font-semibold text-gray-400 uppercase tracking-widest">Active</p>
@@ -82,7 +82,7 @@
       </div>
     </div>
 
-    <!-- â”€â”€â”€ Filter Bar â”€â”€â”€ -->
+    <!-- ——— Filter Bar ——— -->
     <div class="mb-6 bg-white rounded-2xl border border-gray-100 shadow-sm px-5 py-4">
       <div class="flex flex-wrap items-end gap-4">
 
@@ -153,14 +153,14 @@
       </div>
     </div>
 
-    <!-- â”€â”€â”€ Projects Grid â”€â”€â”€ -->
+    <!-- ——— Projects Grid ——— -->
     <div v-if="projects.data.length > 0" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
       <div
         v-for="project in projects.data"
         :key="project.id"
         class="bg-white rounded-2xl shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden flex flex-col"
       >
-        <!-- â”€â”€ Thumbnail â”€â”€ -->
+        <!-- ——— Thumbnail ——— -->
         <Link :href="route('projects.show', project.id)" class="group block relative overflow-hidden flex-shrink-0" style="height: 200px;">
           <!-- Actual thumbnail -->
           <img
@@ -194,7 +194,7 @@
         </Link>
 
 
-        <!-- â”€â”€ Card Body â”€â”€ -->
+        <!-- ——— Card Body ——— -->
         <div class="flex flex-col flex-1 px-4 pt-3 pb-3">
           <!-- Name -->
           <Link :href="route('projects.show', project.id)">
@@ -219,11 +219,11 @@
           <!-- STATUS row -->
           <div class="flex items-center justify-between mb-1.5">
             <span class="text-[10px] font-semibold text-gray-400 uppercase tracking-widest">Status</span>
-            <span class="text-xs font-semibold text-gray-700">{{ project.status_display }}</span>
+            <span class="px-2 py-0.5 rounded-full text-[11px] font-semibold" :class="statusClass(project.status)">{{ project.status_display }}</span>
           </div>
           <!-- Progress bar (status indicator) -->
-          <div class="w-full h-1 bg-gray-100 rounded-full mb-3 overflow-hidden">
-            <div class="h-full rounded-full transition-all" :class="statusBarClass(project.status)" :style="{ width: statusProgress(project.status) }" />
+          <div class="w-full h-1.5 bg-gray-100 rounded-full mb-3 overflow-hidden">
+            <div class="h-full rounded-full transition-all duration-500" :class="statusBarClass(project.status)" :style="{ width: statusProgress(project.status) }" />
           </div>
 
           <!-- Separator -->
@@ -281,7 +281,7 @@
     <!-- Pagination -->
     <div v-if="projects.links.length > 3" class="mt-8 flex items-center justify-between">
       <p class="text-sm text-gray-500">
-        Showing <span class="font-semibold text-gray-900">{{ projects.from }}</span>â€“<span class="font-semibold text-gray-900">{{ projects.to }}</span>
+        Showing <span class="font-semibold text-gray-900">{{ projects.from }}</span>&ndash;<span class="font-semibold text-gray-900">{{ projects.to }}</span>
         of <span class="font-semibold text-gray-900">{{ projects.total }}</span> projects
       </p>
       <nav class="inline-flex rounded-xl shadow-sm overflow-hidden border border-gray-200">

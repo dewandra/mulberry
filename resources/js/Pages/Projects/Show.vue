@@ -31,7 +31,7 @@
               <p class="text-white/70 text-sm mt-0.5">{{ project.client?.company_name }} &bull; {{ project.project_code }}</p>
             </div>
             <!-- Admin Action Buttons (top-right on banner) -->
-            <div v-if="canManage" class="flex flex-wrap gap-2">
+            <div v-if="canManage && ['work_in_progress', 'preview_sent', 'feedback_received'].includes(project.status)" class="flex flex-wrap gap-2">
               <button @click="showPreviewModal = true"
                 class="px-4 py-2 text-sm font-semibold bg-white text-blue-700 rounded-xl hover:bg-blue-50 shadow-md transition-colors">
                 📤 Send Preview
