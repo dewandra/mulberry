@@ -13,8 +13,12 @@ $app = require_once __DIR__.'/../bootstrap/app.php';
 $kernel = $app->make(Illuminate\Contracts\Console\Kernel::class);
 $kernel->bootstrap();
 
-// Verify token
-$expectedToken = env('DEPLOY_TOKEN');
+// Verify token by reading directly from .env (to avoid config cache traps)
+$envPath = base_path('.env');
+$envContent = file_exists($envPath) ? file_get_contents($envPath) : '';
+preg_match('/^DEPLOY_TOKEN=(.*)$/m', $envContent, $matches);
+$expectedToken = isset($matches[1]) ? trim($matches[1], "\"' \t\n\r\0\x0B") : '';
+
 $providedToken = $_GET['token'] ?? '';
 
 if (!$expectedToken || $providedToken !== $expectedToken) {
