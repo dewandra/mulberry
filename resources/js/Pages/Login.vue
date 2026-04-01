@@ -11,7 +11,7 @@
             Sign in
           </h2>
           <p class="mt-2 text-sm text-gray-600">
-            Project Status Dashboard
+            Mullbery Project Tracking System
           </p>
         </div>
 

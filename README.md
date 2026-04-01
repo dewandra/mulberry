@@ -1,66 +1,112 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+<div align="center">
+  <img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="200" alt="Laravel Logo" style="display: inline-block; margin-right: 20px;">
+  <img src="https://upload.wikimedia.org/wikipedia/commons/9/95/Vue.js_Logo_2.svg" width="80" alt="Vue.js Logo" style="display: inline-block;">
+</div>
+
+<h1 align="center">Mulberry Project Tracking System</h1>
 
 <p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
+  A modern, efficient Project Tracking and Management Dashboard built with <strong>Laravel 11</strong>, <strong>Vue.js 3</strong> (via Inertia.js), and <strong>Tailwind CSS</strong>. Tailored for creative agencies to manage clients, track project progress, and streamline feedback loops.
 </p>
 
-## About Laravel
+---
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## 📸 Screenshots
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+| Login Page | Admin Dashboard |
+| :---: | :---: |
+| <img src="docs/screenshots/login.png" width="400"> | <img src="docs/screenshots/dashboard.png" width="400"> |
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+| Projects List | Project Detail & Feedback |
+| :---: | :---: |
+| <img src="docs/screenshots/project.png" width="400"> | <img src="docs/screenshots/detail_project.png" width="400"> |
 
-## Learning Laravel
+| Companies Management | User Management |
+| :---: | :---: |
+| <img src="docs/screenshots/list_companies.png" width="400"> | <img src="docs/screenshots/list_akun.png" width="400"> |
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+## ✨ Features
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+- **Role-Based Access Control (RBAC):** Distinct interfaces and abilities for `Super Administrator`, `Admin ACT`, `PIC` (Person In Charge), and `Client`.
+- **Project Lifecycle Tracking:** Visual progress bars pushing projects from *Brief* to *Closed* with specific statuses (e.g., Work In Progress, Preview Sent, Feedback Received, Artwork Approved).
+- **Interactive Feedback System:** Two-way feedback loop between internal team and clients, including file attachments and previews.
+- **Client & User Management:** Organize projects by Companies and safely assign specific client users to oversee only their respective projects.
+- **Modern UI/UX:** Responsive, dynamic dashboard with real-time statistics, smooth animations, and comprehensive activity logging.
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+## 🛠️ Tech Stack
 
-## Laravel Sponsors
+- **Backend:** [Laravel 11](https://laravel.com/) (PHP 8.2)
+- **Frontend:** [Vue 3](https://vuejs.org/) (Composition API)
+- **Routing/Bridge:** [Inertia.js](https://inertiajs.com/)
+- **Styling:** [Tailwind CSS 3](https://tailwindcss.com/)
+- **Database:** SQLite (Default for local development)
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+## 🚀 How to Run Locally
 
-### Premium Partners
+Follow these steps to set up the application on your local machine.
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[WebReinvent](https://webreinvent.com/)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Jump24](https://jump24.co.uk)**
-- **[Redberry](https://redberry.international/laravel/)**
-- **[Active Logic](https://activelogic.com)**
-- **[byte5](https://byte5.de)**
-- **[OP.GG](https://op.gg)**
+### Prerequisites
+- PHP >= 8.2
+- Composer
+- Node.js & npm
+- Git
 
-## Contributing
+### Installation Steps
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+1. **Clone the repository**
+   ```bash
+   git clone <your-repo-url> mulberry
+   cd mulberry
+   ```
 
-## Code of Conduct
+2. **Install PHP Dependencies**
+   ```bash
+   composer install
+   ```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+3. **Install Node.js Dependencies**
+   ```bash
+   npm install
+   ```
 
-## Security Vulnerabilities
+4. **Environment Setup**
+   Copy the example `.env` file and generate a new application key.
+   ```bash
+   cp .env.example .env
+   php artisan key:generate
+   ```
+   > **Note:** The default database in `.env` is set to `sqlite`.
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+5. **Set up the Database**
+   Create the SQLite file and run migrations along with seeders.
+   ```bash
+   touch database/database.sqlite
+   php artisan migrate:fresh --seed
+   ```
+   *The seeder will automatically generate Dummy Data including sample Projects, Companies, and admin/client accounts.*
 
-## License
+6. **Start the Development Servers**
+   You need to run two processes simultaneously in separate terminal windows.
+   
+   **Terminal 1: Start Laravel Backend**
+   ```bash
+   php artisan serve
+   ```
+   
+   **Terminal 2: Start Vite Frontend (for Vue/Tailwind compilation)**
+   ```bash
+   npm run dev
+   ```
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+7. **Access the Application**
+   Open your browser and navigate to: `http://localhost:8000`
+
+### Default Login Accounts
+
+If you ran the seeder (`--seed`), you can log in using the accounts generated by `DemoSeeder.php` or `DatabaseSeeder.php`. Typically, check your seeders or register a new Super Admin account to access all features.
+
+## 📡 Deployment (CI/CD)
+
+This project includes a built-in automated deployment script (`public/deploy-webhook.php`) and a GitHub Actions workflow (`.github/workflows/deploy.yml`).
+
+When code is pushed or tagged on GitHub, it transfers files via FTP, handles cache clearing, updates the application version dynamically from Git tags, and optimizes views automatically.
